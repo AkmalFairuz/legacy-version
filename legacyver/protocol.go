@@ -192,6 +192,41 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				TexturePacks:         texturePacks,
 				PackURLs:             packURLs,
 			}
+		case *packet.InventorySlot:
+			pks[pkIndex] = &legacypacket.InventorySlot{
+				WindowID:             pk.WindowID,
+				Slot:                 pk.Slot,
+				Container:            pk.Container,
+				DynamicContainerSize: 0,
+				StorageItem:          pk.StorageItem,
+				NewItem:              pk.NewItem,
+			}
+		case *packet.InventoryContent:
+			pks[pkIndex] = &legacypacket.InventoryContent{
+				WindowID:             pk.WindowID,
+				Content:              pk.Content,
+				Container:            pk.Container,
+				DynamicContainerSize: 0,
+				StorageItem:          pk.StorageItem,
+			}
+		case *packet.MobEffect:
+			pks[pkIndex] = &legacypacket.MobEffect{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				Operation:       pk.Operation,
+				EffectType:      pk.EffectType,
+				Amplifier:       pk.Amplifier,
+				Particles:       pk.Particles,
+				Duration:        pk.Duration,
+				Tick:            pk.Tick,
+			}
+		case *packet.CameraAimAssist:
+			pks[pkIndex] = &legacypacket.CameraAimAssist{
+				Preset:     pk.Preset,
+				Angle:      pk.Angle,
+				Distance:   pk.Distance,
+				TargetMode: pk.TargetMode,
+				Action:     pk.Action,
+			}
 		}
 	}
 
@@ -264,6 +299,39 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 				WorldTemplateUUID:    pk.WorldTemplateUUID,
 				WorldTemplateVersion: pk.WorldTemplateVersion,
 				TexturePacks:         texturePacks,
+			}
+		case *legacypacket.InventorySlot:
+			pks[pkIndex] = &packet.InventorySlot{
+				WindowID:    pk.WindowID,
+				Slot:        pk.Slot,
+				Container:   pk.Container,
+				StorageItem: pk.StorageItem,
+				NewItem:     pk.NewItem,
+			}
+		case *legacypacket.InventoryContent:
+			pks[pkIndex] = &packet.InventoryContent{
+				WindowID:    pk.WindowID,
+				Content:     pk.Content,
+				Container:   pk.Container,
+				StorageItem: pk.StorageItem,
+			}
+		case *legacypacket.MobEffect:
+			pks[pkIndex] = &packet.MobEffect{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				Operation:       pk.Operation,
+				EffectType:      pk.EffectType,
+				Amplifier:       pk.Amplifier,
+				Particles:       pk.Particles,
+				Duration:        pk.Duration,
+				Tick:            pk.Tick,
+			}
+		case *legacypacket.CameraAimAssist:
+			pks[pkIndex] = &packet.CameraAimAssist{
+				Preset:     pk.Preset,
+				Angle:      pk.Angle,
+				Distance:   pk.Distance,
+				TargetMode: pk.TargetMode,
+				Action:     pk.Action,
 			}
 		}
 	}
