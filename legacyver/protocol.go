@@ -17,12 +17,32 @@ func init() {
 	packetPoolClient = packet.NewClientPool()
 	packetPoolServer = packet.NewServerPool()
 
-	packetPoolServer[packet.IDItemStackResponse] = func() packet.Packet { return &legacypacket.ItemStackResponse{} }
-	packetPoolServer[packet.IDResourcePacksInfo] = func() packet.Packet { return &legacypacket.ResourcePacksInfo{} }
-	packetPoolServer[packet.IDCameraPresets] = func() packet.Packet { return &legacypacket.CameraPresets{} }
+	for pkId, cur := range packetPoolClient {
+		packetPoolClient[pkId] = convertPacketFunc(pkId, cur)
+	}
+}
 
-	packetPoolClient[packet.IDPlayerAuthInput] = func() packet.Packet { return &legacypacket.PlayerAuthInput{} }
-	packetPoolClient[packet.IDCameraAimAssist] = func() packet.Packet { return &legacypacket.CameraAimAssist{} }
+func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packet {
+	switch pid {
+	case packet.IDCameraAimAssist:
+		return func() packet.Packet { return &legacypacket.CameraAimAssist{} }
+	case packet.IDCameraPresets:
+		return func() packet.Packet { return &legacypacket.CameraPresets{} }
+	case packet.IDInventoryContent:
+		return func() packet.Packet { return &legacypacket.InventoryContent{} }
+	case packet.IDInventorySlot:
+		return func() packet.Packet { return &legacypacket.InventorySlot{} }
+	case packet.IDItemStackResponse:
+		return func() packet.Packet { return &legacypacket.ItemStackResponse{} }
+	case packet.IDMobEffect:
+		return func() packet.Packet { return &legacypacket.MobEffect{} }
+	case packet.IDPlayerAuthInput:
+		return func() packet.Packet { return &legacypacket.PlayerAuthInput{} }
+	case packet.IDResourcePacksInfo:
+		return func() packet.Packet { return &legacypacket.ResourcePacksInfo{} }
+	default:
+		return cur
+	}
 }
 
 type Protocol struct {
@@ -142,6 +162,7 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 			pks[pkIndex] = &legacypacket.ItemStackResponse{Responses: responses}
 		case *packet.ResourcePacksInfo:
 			texturePacks := make([]proto.TexturePackInfo, len(pk.TexturePacks))
+			packURLs := make([]protocol.PackURL, 0)
 			for i, t := range pk.TexturePacks {
 				texturePacks[i] = proto.TexturePackInfo{
 					UUID:            t.UUID,
@@ -155,6 +176,12 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 					RTXEnabled:      t.RTXEnabled,
 					DownloadURL:     t.DownloadURL,
 				}
+				if t.DownloadURL != "" {
+					packURLs = append(packURLs, protocol.PackURL{
+						UUIDVersion: t.UUID.String() + "_" + t.Version,
+						URL:         t.DownloadURL,
+					})
+				}
 			}
 			pks[pkIndex] = &legacypacket.ResourcePacksInfo{
 				TexturePackRequired:  pk.TexturePackRequired,
@@ -163,6 +190,7 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				WorldTemplateUUID:    pk.WorldTemplateUUID,
 				WorldTemplateVersion: pk.WorldTemplateVersion,
 				TexturePacks:         texturePacks,
+				PackURLs:             packURLs,
 			}
 		}
 	}
@@ -220,6 +248,14 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 			texturePacks := make([]protocol.TexturePackInfo, len(pk.TexturePacks))
 			for i, t := range pk.TexturePacks {
 				texturePacks[i] = t.ToLatest()
+				if texturePacks[i].DownloadURL == "" {
+					for _, u := range pk.PackURLs {
+						if u.UUIDVersion == t.UUID.String()+"_"+t.Version {
+							texturePacks[i].DownloadURL = u.URL
+							break
+						}
+					}
+				}
 			}
 			pks[pkIndex] = &packet.ResourcePacksInfo{
 				TexturePackRequired:  pk.TexturePackRequired,

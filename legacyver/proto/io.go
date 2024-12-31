@@ -51,3 +51,9 @@ func IsWriter(w protocol.IO) bool {
 	_, ok := w.(*Writer)
 	return ok
 }
+
+func EmptySlice[T any](io protocol.IO, slice *[]T) {
+	if IsReader(io) {
+		*slice = make([]T, 0)
+	}
+}

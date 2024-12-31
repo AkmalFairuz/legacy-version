@@ -112,9 +112,11 @@ func (x *CameraPreset) Marshal(r protocol.IO) {
 	protocol.OptionalFunc(r, &x.RotY, r.Float32)
 	protocol.OptionalFunc(r, &x.RotationSpeed, r.Float32)
 	protocol.OptionalFunc(r, &x.SnapToTarget, r.Bool)
-	protocol.OptionalFunc(r, &x.HorizontalRotationLimit, r.Vec2)
-	protocol.OptionalFunc(r, &x.VerticalRotationLimit, r.Vec2)
-	protocol.OptionalFunc(r, &x.ContinueTargeting, r.Bool)
+	if IsProtoGTE(r, ID748) {
+		protocol.OptionalFunc(r, &x.HorizontalRotationLimit, r.Vec2)
+		protocol.OptionalFunc(r, &x.VerticalRotationLimit, r.Vec2)
+		protocol.OptionalFunc(r, &x.ContinueTargeting, r.Bool)
+	}
 	if IsProtoGTE(r, ID766) {
 		protocol.OptionalFunc(r, &x.TrackingRadius, r.Float32)
 	}
@@ -123,7 +125,9 @@ func (x *CameraPreset) Marshal(r protocol.IO) {
 	protocol.OptionalFunc(r, &x.Radius, r.Float32)
 	protocol.OptionalFunc(r, &x.AudioListener, r.Uint8)
 	protocol.OptionalFunc(r, &x.PlayerEffects, r.Bool)
-	protocol.OptionalFunc(r, &x.AlignTargetAndCameraForward, r.Bool)
+	if IsProtoGTE(r, ID748) {
+		protocol.OptionalFunc(r, &x.AlignTargetAndCameraForward, r.Bool)
+	}
 	if IsProtoGTE(r, ID766) {
 		protocol.OptionalMarshaler(r, &x.AimAssist)
 	}

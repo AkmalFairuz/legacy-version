@@ -83,8 +83,10 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Varuint32(&pk.InputMode)
 	io.Varuint32(&pk.PlayMode)
 	io.Varuint32(&pk.InteractionModel)
-	io.Float32(&pk.InteractPitch)
-	io.Float32(&pk.InteractYaw)
+	if proto.IsProtoGTE(io, proto.ID748) {
+		io.Float32(&pk.InteractPitch)
+		io.Float32(&pk.InteractYaw)
+	}
 	io.Varuint64(&pk.Tick)
 	io.Vec3(&pk.Delta)
 
@@ -106,7 +108,9 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	}
 
 	io.Vec2(&pk.AnalogueMoveVector)
-	io.Vec3(&pk.CameraOrientation)
+	if proto.IsProtoGTE(io, proto.ID748) {
+		io.Vec3(&pk.CameraOrientation)
+	}
 
 	if proto.IsProtoGTE(io, proto.ID766) {
 		io.Vec2(&pk.RawMoveVector)

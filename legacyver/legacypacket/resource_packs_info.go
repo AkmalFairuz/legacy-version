@@ -31,6 +31,9 @@ type ResourcePacksInfo struct {
 	// The order of these texture packs is not relevant in this packet. It is however important in the
 	// ResourcePackStack packet.
 	TexturePacks []proto.TexturePackInfo
+
+	// PackURLs ...
+	PackURLs []protocol.PackURL
 }
 
 // ID ...
@@ -47,4 +50,9 @@ func (pk *ResourcePacksInfo) Marshal(io protocol.IO) {
 		io.String(&pk.WorldTemplateVersion)
 	}
 	protocol.SliceUint16Length(io, &pk.TexturePacks)
+	if proto.IsProtoLT(io, proto.ID748) {
+		protocol.Slice(io, &pk.PackURLs)
+	} else {
+		proto.EmptySlice(io, &pk.PackURLs)
+	}
 }
