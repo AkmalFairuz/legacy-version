@@ -15,11 +15,11 @@ const (
 )
 
 var (
-	//go:embed item_runtime_ids_748.nbt
+	//go:embed data/item_runtime_ids_748.nbt
 	itemRuntimeIDData748 []byte
-	//go:embed required_item_list_748.json
+	//go:embed data/required_item_list_748.json
 	requiredItemList748 []byte
-	//go:embed block_states_748.nbt
+	//go:embed data/block_states_748.nbt
 	blockStateData748 []byte
 )
 

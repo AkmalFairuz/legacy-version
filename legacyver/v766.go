@@ -13,11 +13,11 @@ const (
 )
 
 var (
-	//go:embed item_runtime_ids_766.nbt
+	//go:embed data/item_runtime_ids_766.nbt
 	itemRuntimeIDData766 []byte
-	//go:embed required_item_list_766.json
+	//go:embed data/required_item_list_766.json
 	requiredItemList766 []byte
-	//go:embed block_states_766.nbt
+	//go:embed data/block_states_766.nbt
 	blockStateData766 []byte
 
 	itemMappingLatest  = mapping.NewItemMapping(itemRuntimeIDData766, requiredItemList766, ItemVersion766, false)

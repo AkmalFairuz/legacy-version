@@ -7,102 +7,6 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
-const PlayerAuthInputBitsetSize = 65
-
-const (
-	InputFlagAscend = iota
-	InputFlagDescend
-	InputFlagNorthJump
-	InputFlagJumpDown
-	InputFlagSprintDown
-	InputFlagChangeHeight
-	InputFlagJumping
-	InputFlagAutoJumpingInWater
-	InputFlagSneaking
-	InputFlagSneakDown
-	InputFlagUp
-	InputFlagDown
-	InputFlagLeft
-	InputFlagRight
-	InputFlagUpLeft
-	InputFlagUpRight
-	InputFlagWantUp
-	InputFlagWantDown
-	InputFlagWantDownSlow
-	InputFlagWantUpSlow
-	InputFlagSprinting
-	InputFlagAscendBlock
-	InputFlagDescendBlock
-	InputFlagSneakToggleDown
-	InputFlagPersistSneak
-	InputFlagStartSprinting
-	InputFlagStopSprinting
-	InputFlagStartSneaking
-	InputFlagStopSneaking
-	InputFlagStartSwimming
-	InputFlagStopSwimming
-	InputFlagStartJumping
-	InputFlagStartGliding
-	InputFlagStopGliding
-	InputFlagPerformItemInteraction
-	InputFlagPerformBlockActions
-	InputFlagPerformItemStackRequest
-	InputFlagHandledTeleport
-	InputFlagEmoting
-	InputFlagMissedSwing
-	InputFlagStartCrawling
-	InputFlagStopCrawling
-	InputFlagStartFlying
-	InputFlagStopFlying
-	InputFlagClientAckServerData
-	InputFlagClientPredictedVehicle
-	InputFlagPaddlingLeft
-	InputFlagPaddlingRight
-	InputFlagBlockBreakingDelayEnabled
-	InputFlagHorizontalCollision
-	InputFlagVerticalCollision
-	InputFlagDownLeft
-	InputFlagDownRight
-	InputFlagStartUsingItem
-	InputFlagCameraRelativeMovementEnabled
-	InputFlagRotControlledByMoveDirection
-	InputFlagStartSpinAttack
-	InputFlagStopSpinAttack
-	InputFlagIsHotbarTouchOnly
-	InputFlagJumpReleasedRaw
-	InputFlagJumpPressedRaw
-	InputFlagJumpCurrentRaw
-	InputFlagSneakReleasedRaw
-	InputFlagSneakPressedRaw
-	InputFlagSneakCurrentRaw
-)
-
-const (
-	InputModeMouse = iota + 1
-	InputModeTouch
-	InputModeGamePad
-	InputModeMotionController
-)
-
-const (
-	PlayModeNormal = iota
-	PlayModeTeaser
-	PlayModeScreen
-	PlayModeViewer
-	PlayModeReality
-	PlayModePlacement
-	PlayModeLivingRoom
-	PlayModeExitLevel
-	PlayModeExitLevelLivingRoom
-	PlayModeNumModes
-)
-
-const (
-	InteractionModelTouch = iota
-	InteractionModelCrosshair
-	InteractionModelClassic
-)
-
 // PlayerAuthInput is sent by the client to allow for server authoritative movement. It is used to synchronise
 // the player input with the position server-side.
 // The client sends this packet when the ServerAuthoritativeMovementMode field in the StartGame packet is set
@@ -172,7 +76,7 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Vec2(&pk.MoveVector)
 	io.Float32(&pk.HeadYaw)
 	if proto.IsProtoGTE(io, proto.ID766) {
-		io.Bitset(&pk.InputData, PlayerAuthInputBitsetSize)
+		io.Bitset(&pk.InputData, packet.PlayerAuthInputBitsetSize)
 	} else {
 		io.Bitset(&pk.InputData, 64)
 	}
@@ -184,19 +88,19 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Varuint64(&pk.Tick)
 	io.Vec3(&pk.Delta)
 
-	if pk.InputData.Load(InputFlagPerformItemInteraction) {
+	if pk.InputData.Load(packet.InputFlagPerformItemInteraction) {
 		io.PlayerInventoryAction(&pk.ItemInteractionData)
 	}
 
-	if pk.InputData.Load(InputFlagPerformItemStackRequest) {
+	if pk.InputData.Load(packet.InputFlagPerformItemStackRequest) {
 		protocol.Single(io, &pk.ItemStackRequest)
 	}
 
-	if pk.InputData.Load(InputFlagPerformBlockActions) {
+	if pk.InputData.Load(packet.InputFlagPerformBlockActions) {
 		protocol.SliceVarint32Length(io, &pk.BlockActions)
 	}
 
-	if pk.InputData.Load(InputFlagClientPredictedVehicle) {
+	if pk.InputData.Load(packet.InputFlagClientPredictedVehicle) {
 		io.Vec2(&pk.VehicleRotation)
 		io.Varint64(&pk.ClientPredictedVehicle)
 	}

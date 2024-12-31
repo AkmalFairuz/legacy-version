@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	//go:embed block_states_766.nbt
+	//go:embed data/block_states_766.nbt
 	latestBlockStateData []byte
 
 	// latestBlockMapping is the BlockMapping used for translating blocks between versions.

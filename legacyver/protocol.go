@@ -19,8 +19,10 @@ func init() {
 
 	packetPoolServer[packet.IDItemStackResponse] = func() packet.Packet { return &legacypacket.ItemStackResponse{} }
 	packetPoolServer[packet.IDResourcePacksInfo] = func() packet.Packet { return &legacypacket.ResourcePacksInfo{} }
+	packetPoolServer[packet.IDCameraPresets] = func() packet.Packet { return &legacypacket.CameraPresets{} }
 
 	packetPoolClient[packet.IDPlayerAuthInput] = func() packet.Packet { return &legacypacket.PlayerAuthInput{} }
+	packetPoolClient[packet.IDCameraAimAssist] = func() packet.Packet { return &legacypacket.CameraAimAssist{} }
 }
 
 type Protocol struct {
@@ -69,6 +71,14 @@ func (p *Protocol) ConvertFromLatest(pk packet.Packet, conn *minecraft.Conn) []p
 func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) []packet.Packet {
 	for pkIndex, pk := range pks {
 		switch pk := pk.(type) {
+		case *packet.CameraPresets:
+			presets := make([]proto.CameraPreset, len(pk.Presets))
+			for i, p := range pk.Presets {
+				presets[i].FromLatest(p)
+			}
+			pks[pkIndex] = &legacypacket.CameraPresets{
+				Presets: presets,
+			}
 		case *packet.StartGame:
 			pk.GameVersion = p.ver
 			pk.BaseGameVersion = p.ver
@@ -163,6 +173,14 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []packet.Packet {
 	for pkIndex, pk := range pks {
 		switch pk := pk.(type) {
+		case *legacypacket.CameraPresets:
+			presets := make([]protocol.CameraPreset, len(pk.Presets))
+			for i, p := range pk.Presets {
+				presets[i] = p.ToLatest()
+			}
+			pks[pkIndex] = &packet.CameraPresets{
+				Presets: presets,
+			}
 		case *packet.StartGame:
 			pk.GameVersion = p.ver
 			pk.BaseGameVersion = p.ver
