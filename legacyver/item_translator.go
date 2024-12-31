@@ -318,10 +318,12 @@ func (t *DefaultItemTranslator) DowngradeItemPackets(pks []packet.Packet, _ *min
 			pk.HeldItem = t.DowngradeItemInstance(pk.HeldItem)
 		case *packet.InventorySlot:
 			pk.NewItem = t.DowngradeItemInstance(pk.NewItem)
+			pk.StorageItem = t.DowngradeItemInstance(pk.StorageItem)
 		case *packet.InventoryContent:
 			pk.Content = lo.Map(pk.Content, func(item protocol.ItemInstance, _ int) protocol.ItemInstance {
 				return t.DowngradeItemInstance(item)
 			})
+			pk.StorageItem = t.DowngradeItemInstance(pk.StorageItem)
 		case *packet.ItemStackRequest:
 			for i, request := range pk.Requests {
 				for i2, action := range request.Actions {
@@ -540,10 +542,12 @@ func (t *DefaultItemTranslator) UpgradeItemPackets(pks []packet.Packet, _ *minec
 			pk.HeldItem = t.UpgradeItemInstance(pk.HeldItem)
 		case *packet.InventorySlot:
 			pk.NewItem = t.UpgradeItemInstance(pk.NewItem)
+			pk.StorageItem = t.UpgradeItemInstance(pk.StorageItem)
 		case *packet.InventoryContent:
 			pk.Content = lo.Map(pk.Content, func(item protocol.ItemInstance, _ int) protocol.ItemInstance {
 				return t.UpgradeItemInstance(item)
 			})
+			pk.StorageItem = t.UpgradeItemInstance(pk.StorageItem)
 		case *packet.ItemStackRequest:
 			for i, request := range pk.Requests {
 				for i2, action := range request.Actions {
