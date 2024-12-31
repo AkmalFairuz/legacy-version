@@ -173,6 +173,8 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []packet.Packet {
 	for pkIndex, pk := range pks {
 		switch pk := pk.(type) {
+		case *packet.ClientCacheStatus:
+			pk.Enabled = false // TODO: enable when chunk translation is not broken
 		case *legacypacket.CameraPresets:
 			presets := make([]protocol.CameraPreset, len(pk.Presets))
 			for i, p := range pk.Presets {
