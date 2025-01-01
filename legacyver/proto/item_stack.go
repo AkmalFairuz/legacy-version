@@ -538,7 +538,9 @@ type CraftRecipeStackRequestAction struct {
 // Marshal ...
 func (a *CraftRecipeStackRequestAction) Marshal(r protocol.IO) {
 	r.Varuint32(&a.RecipeNetworkID)
-	r.Uint8(&a.NumberOfCrafts)
+	if IsProtoGTE(r, ID712) {
+		r.Uint8(&a.NumberOfCrafts)
+	}
 }
 
 // AutoCraftRecipeStackRequestAction is sent by the client similarly to the CraftRecipeStackRequestAction. The

@@ -43,7 +43,9 @@ func (pk *InventorySlot) Marshal(io protocol.IO) {
 	if proto.IsProtoGTE(io, proto.ID748) {
 		io.ItemInstance(&pk.StorageItem)
 	} else {
-		io.Varuint32(&pk.DynamicContainerSize)
+		if proto.IsProtoGTE(io, proto.ID712) {
+			io.Varuint32(&pk.DynamicContainerSize)
+		}
 	}
 	io.ItemInstance(&pk.NewItem)
 }

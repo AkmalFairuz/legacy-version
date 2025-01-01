@@ -233,6 +233,137 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				Port:        pk.Port,
 				ReloadWorld: pk.ReloadWorld,
 			}
+		case *packet.AddActor:
+			links := make([]proto.EntityLink, len(pk.EntityLinks))
+			for i, l := range pk.EntityLinks {
+				links[i] = (&proto.EntityLink{}).FromLatest(l)
+			}
+			pks[pkIndex] = &legacypacket.AddActor{
+				EntityUniqueID:   pk.EntityUniqueID,
+				EntityRuntimeID:  pk.EntityRuntimeID,
+				EntityType:       pk.EntityType,
+				Position:         pk.Position,
+				Velocity:         pk.Velocity,
+				Pitch:            pk.Pitch,
+				Yaw:              pk.Yaw,
+				HeadYaw:          pk.HeadYaw,
+				BodyYaw:          pk.BodyYaw,
+				Attributes:       pk.Attributes,
+				EntityMetadata:   pk.EntityMetadata,
+				EntityProperties: pk.EntityProperties,
+				EntityLinks:      links,
+			}
+		case *packet.AddPlayer:
+			links := make([]proto.EntityLink, len(pk.EntityLinks))
+			for i, l := range pk.EntityLinks {
+				links[i] = (&proto.EntityLink{}).FromLatest(l)
+			}
+			pks[pkIndex] = &legacypacket.AddPlayer{
+				UUID:             pk.UUID,
+				Username:         pk.Username,
+				EntityRuntimeID:  pk.EntityRuntimeID,
+				PlatformChatID:   pk.PlatformChatID,
+				Position:         pk.Position,
+				Velocity:         pk.Velocity,
+				Pitch:            pk.Pitch,
+				Yaw:              pk.Yaw,
+				HeadYaw:          pk.HeadYaw,
+				HeldItem:         pk.HeldItem,
+				GameType:         pk.GameType,
+				EntityMetadata:   pk.EntityMetadata,
+				EntityProperties: pk.EntityProperties,
+				AbilityData:      pk.AbilityData,
+				EntityLinks:      links,
+				DeviceID:         pk.DeviceID,
+				BuildPlatform:    pk.BuildPlatform,
+			}
+		case *packet.SetActorLink:
+			pks[pkIndex] = &legacypacket.SetActorLink{
+				EntityLink: (&proto.EntityLink{}).FromLatest(pk.EntityLink),
+			}
+		case *packet.CameraInstruction:
+			pks[pkIndex] = &legacypacket.CameraInstruction{
+				Set:          pk.Set,
+				Clear:        pk.Clear,
+				Fade:         pk.Fade,
+				Target:       pk.Target,
+				RemoveTarget: pk.RemoveTarget,
+			}
+		case *packet.ChangeDimension:
+			pks[pkIndex] = &legacypacket.ChangeDimension{
+				Dimension:       pk.Dimension,
+				Position:        pk.Position,
+				Respawn:         pk.Respawn,
+				LoadingScreenID: pk.LoadingScreenID,
+			}
+		case *packet.CorrectPlayerMovePrediction:
+			pks[pkIndex] = &legacypacket.CorrectPlayerMovePrediction{
+				PredictionType:         pk.PredictionType,
+				Position:               pk.Position,
+				Delta:                  pk.Delta,
+				Rotation:               pk.Rotation,
+				VehicleAngularVelocity: pk.VehicleAngularVelocity,
+				OnGround:               pk.OnGround,
+				Tick:                   pk.Tick,
+			}
+		case *packet.Disconnect:
+			pks[pkIndex] = &legacypacket.Disconnect{
+				Reason:                  pk.Reason,
+				HideDisconnectionScreen: pk.HideDisconnectionScreen,
+				Message:                 pk.Message,
+				FilteredMessage:         pk.FilteredMessage,
+			}
+		case *packet.EditorNetwork:
+			pks[pkIndex] = &legacypacket.EditorNetwork{
+				RouteToManager: pk.RouteToManager,
+				Payload:        pk.Payload,
+			}
+		case *packet.MobArmourEquipment:
+			pks[pkIndex] = &legacypacket.MobArmourEquipment{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				Helmet:          pk.Helmet,
+				Chestplate:      pk.Chestplate,
+				Leggings:        pk.Leggings,
+				Boots:           pk.Boots,
+				Body:            pk.Body,
+			}
+		case *packet.PlayerArmourDamage:
+			pks[pkIndex] = &legacypacket.PlayerArmourDamage{
+				Bitset:           pk.Bitset,
+				HelmetDamage:     pk.HelmetDamage,
+				ChestplateDamage: pk.ChestplateDamage,
+				LeggingsDamage:   pk.LeggingsDamage,
+				BootsDamage:      pk.BootsDamage,
+				BodyDamage:       pk.BodyDamage,
+			}
+		case *packet.SetTitle:
+			pks[pkIndex] = &legacypacket.SetTitle{
+				ActionType:       pk.ActionType,
+				Text:             pk.Text,
+				FadeInDuration:   pk.FadeInDuration,
+				RemainDuration:   pk.RemainDuration,
+				FadeOutDuration:  pk.FadeOutDuration,
+				XUID:             pk.XUID,
+				PlatformOnlineID: pk.PlatformOnlineID,
+				FilteredMessage:  pk.FilteredMessage,
+			}
+		case *packet.StopSound:
+			pks[pkIndex] = &legacypacket.StopSound{
+				SoundName:       pk.SoundName,
+				StopAll:         pk.StopAll,
+				StopMusicLegacy: pk.StopMusicLegacy,
+			}
+		case *packet.InventoryTransaction:
+			trData := pk.TransactionData
+			if x, ok := trData.(*protocol.UseItemTransactionData); ok {
+				trData = (&proto.UseItemTransactionData{}).FromLatest(x)
+			}
+			pks[pkIndex] = &legacypacket.InventoryTransaction{
+				LegacyRequestID:    pk.LegacyRequestID,
+				LegacySetItemSlots: pk.LegacySetItemSlots,
+				Actions:            pk.Actions,
+				TransactionData:    trData,
+			}
 		}
 	}
 
@@ -371,6 +502,137 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 				Address:     pk.Address,
 				Port:        pk.Port,
 				ReloadWorld: pk.ReloadWorld,
+			}
+		case *legacypacket.AddActor:
+			links := make([]protocol.EntityLink, len(pk.EntityLinks))
+			for i, l := range pk.EntityLinks {
+				links[i] = l.ToLatest()
+			}
+			pks[pkIndex] = &packet.AddActor{
+				EntityUniqueID:   pk.EntityUniqueID,
+				EntityRuntimeID:  pk.EntityRuntimeID,
+				EntityType:       pk.EntityType,
+				Position:         pk.Position,
+				Velocity:         pk.Velocity,
+				Pitch:            pk.Pitch,
+				Yaw:              pk.Yaw,
+				HeadYaw:          pk.HeadYaw,
+				BodyYaw:          pk.BodyYaw,
+				Attributes:       pk.Attributes,
+				EntityMetadata:   pk.EntityMetadata,
+				EntityProperties: pk.EntityProperties,
+				EntityLinks:      links,
+			}
+		case *legacypacket.AddPlayer:
+			links := make([]protocol.EntityLink, len(pk.EntityLinks))
+			for i, l := range pk.EntityLinks {
+				links[i] = l.ToLatest()
+			}
+			pks[pkIndex] = &packet.AddPlayer{
+				UUID:             pk.UUID,
+				Username:         pk.Username,
+				EntityRuntimeID:  pk.EntityRuntimeID,
+				PlatformChatID:   pk.PlatformChatID,
+				Position:         pk.Position,
+				Velocity:         pk.Velocity,
+				Pitch:            pk.Pitch,
+				Yaw:              pk.Yaw,
+				HeadYaw:          pk.HeadYaw,
+				HeldItem:         pk.HeldItem,
+				GameType:         pk.GameType,
+				EntityMetadata:   pk.EntityMetadata,
+				EntityProperties: pk.EntityProperties,
+				AbilityData:      pk.AbilityData,
+				EntityLinks:      links,
+				DeviceID:         pk.DeviceID,
+				BuildPlatform:    pk.BuildPlatform,
+			}
+		case *legacypacket.SetActorLink:
+			pks[pkIndex] = &packet.SetActorLink{
+				EntityLink: pk.EntityLink.ToLatest(),
+			}
+		case *legacypacket.CameraInstruction:
+			pks[pkIndex] = &packet.CameraInstruction{
+				Set:          pk.Set,
+				Clear:        pk.Clear,
+				Fade:         pk.Fade,
+				Target:       pk.Target,
+				RemoveTarget: pk.RemoveTarget,
+			}
+		case *legacypacket.ChangeDimension:
+			pks[pkIndex] = &packet.ChangeDimension{
+				Dimension:       pk.Dimension,
+				Position:        pk.Position,
+				Respawn:         pk.Respawn,
+				LoadingScreenID: pk.LoadingScreenID,
+			}
+		case *legacypacket.CorrectPlayerMovePrediction:
+			pks[pkIndex] = &packet.CorrectPlayerMovePrediction{
+				PredictionType:         pk.PredictionType,
+				Position:               pk.Position,
+				Delta:                  pk.Delta,
+				Rotation:               pk.Rotation,
+				VehicleAngularVelocity: pk.VehicleAngularVelocity,
+				OnGround:               pk.OnGround,
+				Tick:                   pk.Tick,
+			}
+		case *legacypacket.Disconnect:
+			pks[pkIndex] = &packet.Disconnect{
+				Reason:                  pk.Reason,
+				HideDisconnectionScreen: pk.HideDisconnectionScreen,
+				Message:                 pk.Message,
+				FilteredMessage:         pk.FilteredMessage,
+			}
+		case *legacypacket.EditorNetwork:
+			pks[pkIndex] = &packet.EditorNetwork{
+				RouteToManager: pk.RouteToManager,
+				Payload:        pk.Payload,
+			}
+		case *legacypacket.MobArmourEquipment:
+			pks[pkIndex] = &packet.MobArmourEquipment{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				Helmet:          pk.Helmet,
+				Chestplate:      pk.Chestplate,
+				Leggings:        pk.Leggings,
+				Boots:           pk.Boots,
+				Body:            pk.Body,
+			}
+		case *legacypacket.PlayerArmourDamage:
+			pks[pkIndex] = &packet.PlayerArmourDamage{
+				Bitset:           pk.Bitset,
+				HelmetDamage:     pk.HelmetDamage,
+				ChestplateDamage: pk.ChestplateDamage,
+				LeggingsDamage:   pk.LeggingsDamage,
+				BootsDamage:      pk.BootsDamage,
+				BodyDamage:       pk.BodyDamage,
+			}
+		case *legacypacket.SetTitle:
+			pks[pkIndex] = &packet.SetTitle{
+				ActionType:       pk.ActionType,
+				Text:             pk.Text,
+				FadeInDuration:   pk.FadeInDuration,
+				RemainDuration:   pk.RemainDuration,
+				FadeOutDuration:  pk.FadeOutDuration,
+				XUID:             pk.XUID,
+				PlatformOnlineID: pk.PlatformOnlineID,
+				FilteredMessage:  pk.FilteredMessage,
+			}
+		case *legacypacket.StopSound:
+			pks[pkIndex] = &packet.StopSound{
+				SoundName:       pk.SoundName,
+				StopAll:         pk.StopAll,
+				StopMusicLegacy: pk.StopMusicLegacy,
+			}
+		case *legacypacket.InventoryTransaction:
+			trData := pk.TransactionData
+			if x, ok := trData.(*proto.UseItemTransactionData); ok {
+				trData = x.ToLatest()
+			}
+			pks[pkIndex] = &packet.InventoryTransaction{
+				LegacyRequestID:    pk.LegacyRequestID,
+				LegacySetItemSlots: pk.LegacySetItemSlots,
+				Actions:            pk.Actions,
+				TransactionData:    trData,
 			}
 		}
 	}

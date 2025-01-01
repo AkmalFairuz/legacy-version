@@ -91,7 +91,7 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Vec3(&pk.Delta)
 
 	if pk.InputData.Load(packet.InputFlagPerformItemInteraction) {
-		io.PlayerInventoryAction(&pk.ItemInteractionData)
+		proto.PlayerInventoryAction(io, &pk.ItemInteractionData)
 	}
 
 	if pk.InputData.Load(packet.InputFlagPerformItemStackRequest) {

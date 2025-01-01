@@ -87,7 +87,9 @@ func (x *TexturePackInfo) Marshal(r protocol.IO) {
 	r.String(&x.SubPackName)
 	r.String(&x.ContentIdentity)
 	r.Bool(&x.HasScripts)
-	r.Bool(&x.AddonPack)
+	if IsProtoGTE(r, ID712) {
+		r.Bool(&x.AddonPack)
+	}
 	r.Bool(&x.RTXEnabled)
 	if IsProtoGTE(r, ID748) {
 		r.String(&x.DownloadURL)

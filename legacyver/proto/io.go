@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"fmt"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 )
 
@@ -55,5 +56,43 @@ func IsWriter(w protocol.IO) bool {
 func EmptySlice[T any](io protocol.IO, slice *[]T) {
 	if IsReader(io) {
 		*slice = make([]T, 0)
+	}
+}
+
+func TransactionDataType(io protocol.IO, x *InventoryTransactionData) {
+	if IsReader(io) {
+		var transactionType uint32
+		io.Varuint32(&transactionType)
+		if !lookupTransactionData(transactionType, x) {
+			io.UnknownEnumOption(transactionType, "inventory transaction data type")
+		}
+	} else {
+		var id uint32
+		if !lookupTransactionDataType(*x, &id) {
+			io.UnknownEnumOption(fmt.Sprintf("%T", x), "inventory transaction data type")
+		}
+		io.Varuint32(&id)
+	}
+}
+
+func PlayerInventoryAction(io protocol.IO, x *protocol.UseItemTransactionData) {
+	io.Varint32(&x.LegacyRequestID)
+	if x.LegacyRequestID < -1 && (x.LegacyRequestID&1) == 0 {
+		protocol.Slice(io, &x.LegacySetItemSlots)
+	}
+	protocol.Slice(io, &x.Actions)
+	io.Varuint32(&x.ActionType)
+	if IsProtoGTE(io, ID712) {
+		io.Varuint32(&x.TriggerType)
+	}
+	io.BlockPos(&x.BlockPosition)
+	io.Varint32(&x.BlockFace)
+	io.Varint32(&x.HotBarSlot)
+	io.ItemInstance(&x.HeldItem)
+	io.Vec3(&x.Position)
+	io.Vec3(&x.ClickedPosition)
+	io.Varuint32(&x.BlockRuntimeID)
+	if IsProtoGTE(io, ID712) {
+		io.Varuint32(&x.ClientPrediction)
 	}
 }
