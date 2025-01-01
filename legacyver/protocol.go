@@ -137,6 +137,8 @@ func (p *Protocol) ConvertFromLatest(pk packet.Packet, conn *minecraft.Conn) []p
 func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) []packet.Packet {
 	for pkIndex, pk := range pks {
 		switch pk := pk.(type) {
+		case *packet.ClientCacheStatus:
+			pk.Enabled = false // TODO: enable when chunk translation is not broken
 		case *packet.CameraPresets:
 			presets := make([]proto.CameraPreset, len(pk.Presets))
 			for i, p := range pk.Presets {
@@ -405,6 +407,17 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				requests[i] = (&proto.ItemStackRequest{}).FromLatest(r)
 			}
 			pks[pkIndex] = &legacypacket.ItemStackRequest{Requests: requests}
+		case *packet.Text:
+			pks[pkIndex] = &legacypacket.Text{
+				TextType:         pk.TextType,
+				NeedsTranslation: pk.NeedsTranslation,
+				SourceName:       pk.SourceName,
+				Message:          pk.Message,
+				Parameters:       pk.Parameters,
+				XUID:             pk.XUID,
+				PlatformChatID:   pk.PlatformChatID,
+				FilteredMessage:  pk.FilteredMessage,
+			}
 		case *packet.CraftingData:
 			recipes := make([]proto.Recipe, len(pk.Recipes))
 			for i, r := range pk.Recipes {
