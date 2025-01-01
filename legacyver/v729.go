@@ -23,7 +23,7 @@ var (
 	blockStateData729 []byte
 )
 
-func New729(direct bool) *Protocol {
+func New729() *Protocol {
 	itemMapping := mapping.NewItemMapping(itemRuntimeIDData729, requiredItemList729, ItemVersion729, false)
 	blockMapping := mapping.NewBlockMapping(blockStateData729)
 
