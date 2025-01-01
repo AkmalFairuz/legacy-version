@@ -17,7 +17,7 @@ type InventorySlot struct {
 	// index.
 	Slot uint32
 	// Container is the protocol.FullContainerName that describes the container that the content is for.
-	Container protocol.FullContainerName
+	Container proto.FullContainerName
 	// DynamicContainerSize ...
 	DynamicContainerSize uint32
 	// StorageItem is the item that is acting as the storage container for the inventory. If the inventory is
@@ -37,7 +37,9 @@ func (*InventorySlot) ID() uint32 {
 func (pk *InventorySlot) Marshal(io protocol.IO) {
 	io.Varuint32(&pk.WindowID)
 	io.Varuint32(&pk.Slot)
-	protocol.Single(io, &pk.Container)
+	if proto.IsProtoGTE(io, proto.ID729) {
+		protocol.Single(io, &pk.Container)
+	}
 	if proto.IsProtoGTE(io, proto.ID748) {
 		io.ItemInstance(&pk.StorageItem)
 	} else {

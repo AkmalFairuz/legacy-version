@@ -17,7 +17,7 @@ type InventoryContent struct {
 	// the inventory window updated.
 	Content []protocol.ItemInstance
 	// Container is the protocol.FullContainerName that describes the container that the content is for.
-	Container protocol.FullContainerName
+	Container proto.FullContainerName
 	// DynamicContainerSize ...
 	DynamicContainerSize uint32
 	// StorageItem is the item that is acting as the storage container for the inventory. If the inventory is
@@ -34,7 +34,9 @@ func (*InventoryContent) ID() uint32 {
 func (pk *InventoryContent) Marshal(io protocol.IO) {
 	io.Varuint32(&pk.WindowID)
 	protocol.FuncSlice(io, &pk.Content, io.ItemInstance)
-	protocol.Single(io, &pk.Container)
+	if proto.IsProtoGTE(io, proto.ID729) {
+		protocol.Single(io, &pk.Container)
+	}
 	if proto.IsProtoGTE(io, proto.ID748) {
 		io.ItemInstance(&pk.StorageItem)
 	} else {

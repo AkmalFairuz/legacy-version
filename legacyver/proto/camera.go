@@ -53,7 +53,7 @@ type CameraPreset struct {
 	AimAssist protocol.Optional[protocol.CameraPresetAimAssist]
 }
 
-func (x *CameraPreset) FromLatest(cp protocol.CameraPreset) {
+func (x *CameraPreset) FromLatest(cp protocol.CameraPreset) CameraPreset {
 	x.Name = cp.Name
 	x.Parent = cp.Parent
 	x.PosX = cp.PosX
@@ -74,6 +74,7 @@ func (x *CameraPreset) FromLatest(cp protocol.CameraPreset) {
 	x.PlayerEffects = cp.PlayerEffects
 	x.AlignTargetAndCameraForward = cp.AlignTargetAndCameraForward
 	x.AimAssist = cp.AimAssist
+	return *x
 }
 
 func (x *CameraPreset) ToLatest() protocol.CameraPreset {
@@ -110,8 +111,10 @@ func (x *CameraPreset) Marshal(r protocol.IO) {
 	protocol.OptionalFunc(r, &x.PosZ, r.Float32)
 	protocol.OptionalFunc(r, &x.RotX, r.Float32)
 	protocol.OptionalFunc(r, &x.RotY, r.Float32)
-	protocol.OptionalFunc(r, &x.RotationSpeed, r.Float32)
-	protocol.OptionalFunc(r, &x.SnapToTarget, r.Bool)
+	if IsProtoGTE(r, ID729) {
+		protocol.OptionalFunc(r, &x.RotationSpeed, r.Float32)
+		protocol.OptionalFunc(r, &x.SnapToTarget, r.Bool)
+	}
 	if IsProtoGTE(r, ID748) {
 		protocol.OptionalFunc(r, &x.HorizontalRotationLimit, r.Vec2)
 		protocol.OptionalFunc(r, &x.VerticalRotationLimit, r.Vec2)
@@ -121,7 +124,9 @@ func (x *CameraPreset) Marshal(r protocol.IO) {
 		protocol.OptionalFunc(r, &x.TrackingRadius, r.Float32)
 	}
 	protocol.OptionalFunc(r, &x.ViewOffset, r.Vec2)
-	protocol.OptionalFunc(r, &x.EntityOffset, r.Vec3)
+	if IsProtoGTE(r, ID729) {
+		protocol.OptionalFunc(r, &x.EntityOffset, r.Vec3)
+	}
 	protocol.OptionalFunc(r, &x.Radius, r.Float32)
 	protocol.OptionalFunc(r, &x.AudioListener, r.Uint8)
 	protocol.OptionalFunc(r, &x.PlayerEffects, r.Bool)

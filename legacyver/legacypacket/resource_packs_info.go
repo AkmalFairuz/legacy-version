@@ -27,6 +27,10 @@ type ResourcePacksInfo struct {
 	// WorldTemplateVersion is the version of the world template that has been used to generate the world. If
 	// the world was not generated from a template, this field is empty.
 	WorldTemplateVersion string
+	// ForcingServerPacks ...
+	ForcingServerPacks bool
+	// BehaviourPacks ...
+	BehaviourPacks []proto.BehaviourPackInfo
 	// TexturePacks is a list of texture packs that the client needs to download before joining the server.
 	// The order of these texture packs is not relevant in this packet. It is however important in the
 	// ResourcePackStack packet.
@@ -48,6 +52,12 @@ func (pk *ResourcePacksInfo) Marshal(io protocol.IO) {
 	if proto.IsProtoGTE(io, proto.ID766) {
 		io.UUID(&pk.WorldTemplateUUID)
 		io.String(&pk.WorldTemplateVersion)
+	}
+	if proto.IsProtoLT(io, proto.ID729) {
+		io.Bool(&pk.ForcingServerPacks)
+		protocol.SliceUint16Length(io, &pk.BehaviourPacks)
+	} else {
+		proto.EmptySlice(io, &pk.BehaviourPacks)
 	}
 	protocol.SliceUint16Length(io, &pk.TexturePacks)
 	if proto.IsProtoLT(io, proto.ID748) {

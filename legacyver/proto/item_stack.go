@@ -226,6 +226,32 @@ type ItemStackResponse struct {
 	ContainerInfo []StackResponseContainerInfo
 }
 
+func (x *ItemStackResponse) FromLatest(y protocol.ItemStackResponse) ItemStackResponse {
+	ret := ItemStackResponse{
+		Status:        y.Status,
+		RequestID:     y.RequestID,
+		ContainerInfo: make([]StackResponseContainerInfo, len(y.ContainerInfo)),
+	}
+	for i, v := range y.ContainerInfo {
+		ret.ContainerInfo[i] = StackResponseContainerInfo{
+			Container: (&FullContainerName{}).FromLatest(v.Container),
+			SlotInfo:  make([]StackResponseSlotInfo, len(v.SlotInfo)),
+		}
+		for j, w := range v.SlotInfo {
+			ret.ContainerInfo[i].SlotInfo[j] = StackResponseSlotInfo{
+				Slot:                 w.Slot,
+				HotbarSlot:           w.HotbarSlot,
+				Count:                w.Count,
+				StackNetworkID:       w.StackNetworkID,
+				CustomName:           w.CustomName,
+				FilteredCustomName:   w.FilteredCustomName,
+				DurabilityCorrection: w.DurabilityCorrection,
+			}
+		}
+	}
+	return ret
+}
+
 func (x *ItemStackResponse) ToLatest() protocol.ItemStackResponse {
 	ret := protocol.ItemStackResponse{
 		Status:        x.Status,
@@ -234,7 +260,7 @@ func (x *ItemStackResponse) ToLatest() protocol.ItemStackResponse {
 	}
 	for i, v := range x.ContainerInfo {
 		ret.ContainerInfo[i] = protocol.StackResponseContainerInfo{
-			Container: v.Container,
+			Container: v.Container.ToLatest(),
 			SlotInfo:  make([]protocol.StackResponseSlotInfo, len(v.SlotInfo)),
 		}
 		for j, w := range v.SlotInfo {
@@ -266,7 +292,7 @@ type StackResponseContainerInfo struct {
 	// Container is the FullContainerName that describes the container that the slots that follow are in. For
 	// the main inventory, the ContainerID seems to be 0x1b. Fur the cursor, this value seems to be 0x3a. For
 	// the crafting grid, this value seems to be 0x0d.
-	Container protocol.FullContainerName
+	Container FullContainerName
 	// SlotInfo holds information on what item stack should be present in specific slots in the container.
 	SlotInfo []StackResponseSlotInfo
 }
@@ -635,7 +661,7 @@ func (a *CraftResultsDeprecatedStackRequestAction) Marshal(r protocol.IO) {
 // StackRequestSlotInfo holds information on a specific slot client-side.
 type StackRequestSlotInfo struct {
 	// Container is the FullContainerName that describes the container that the slot is in.
-	Container protocol.FullContainerName
+	Container FullContainerName
 	// Slot is the index of the slot within the container with the ContainerID above.
 	Slot byte
 	// StackNetworkID is the unique stack ID that the client assumes to be present in this slot. The server

@@ -28,6 +28,10 @@ func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packe
 		return func() packet.Packet { return &legacypacket.CameraAimAssist{} }
 	case packet.IDCameraPresets:
 		return func() packet.Packet { return &legacypacket.CameraPresets{} }
+	case packet.IDContainerRegistryCleanup:
+		return func() packet.Packet { return &legacypacket.ContainerRegistryCleanup{} }
+	case packet.IDEmote:
+		return func() packet.Packet { return &legacypacket.Emote{} }
 	case packet.IDInventoryContent:
 		return func() packet.Packet { return &legacypacket.InventoryContent{} }
 	case packet.IDInventorySlot:
@@ -40,6 +44,10 @@ func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packe
 		return func() packet.Packet { return &legacypacket.PlayerAuthInput{} }
 	case packet.IDResourcePacksInfo:
 		return func() packet.Packet { return &legacypacket.ResourcePacksInfo{} }
+	case packet.IDTransfer:
+		return func() packet.Packet { return &legacypacket.Transfer{} }
+	case packet.IDUpdateAttributes:
+		return func() packet.Packet { return &legacypacket.UpdateAttributes{} }
 	default:
 		return cur
 	}
@@ -94,7 +102,7 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 		case *packet.CameraPresets:
 			presets := make([]proto.CameraPreset, len(pk.Presets))
 			for i, p := range pk.Presets {
-				presets[i].FromLatest(p)
+				presets[i] = (&proto.CameraPreset{}).FromLatest(p)
 			}
 			pks[pkIndex] = &legacypacket.CameraPresets{
 				Presets: presets,
@@ -133,49 +141,14 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 		case *packet.ItemStackResponse:
 			responses := make([]proto.ItemStackResponse, len(pk.Responses))
 			for i, r := range pk.Responses {
-				containerInfo := make([]proto.StackResponseContainerInfo, len(r.ContainerInfo))
-				for j, c := range r.ContainerInfo {
-					slotInfo := make([]proto.StackResponseSlotInfo, len(c.SlotInfo))
-					for k, s := range c.SlotInfo {
-						slotInfo[k] = proto.StackResponseSlotInfo{
-							Slot:                 s.Slot,
-							HotbarSlot:           s.HotbarSlot,
-							Count:                s.Count,
-							StackNetworkID:       s.StackNetworkID,
-							CustomName:           s.CustomName,
-							FilteredCustomName:   s.FilteredCustomName,
-							DurabilityCorrection: s.DurabilityCorrection,
-						}
-					}
-					containerInfo[j] = proto.StackResponseContainerInfo{
-						Container: c.Container,
-						SlotInfo:  slotInfo,
-					}
-				}
-
-				responses[i] = proto.ItemStackResponse{
-					Status:        r.Status,
-					RequestID:     r.RequestID,
-					ContainerInfo: containerInfo,
-				}
+				responses[i] = (&proto.ItemStackResponse{}).FromLatest(r)
 			}
 			pks[pkIndex] = &legacypacket.ItemStackResponse{Responses: responses}
 		case *packet.ResourcePacksInfo:
 			texturePacks := make([]proto.TexturePackInfo, len(pk.TexturePacks))
 			packURLs := make([]protocol.PackURL, 0)
 			for i, t := range pk.TexturePacks {
-				texturePacks[i] = proto.TexturePackInfo{
-					UUID:            t.UUID,
-					Version:         t.Version,
-					Size:            t.Size,
-					ContentKey:      t.ContentKey,
-					SubPackName:     t.SubPackName,
-					ContentIdentity: t.ContentIdentity,
-					HasScripts:      t.HasScripts,
-					AddonPack:       t.AddonPack,
-					RTXEnabled:      t.RTXEnabled,
-					DownloadURL:     t.DownloadURL,
-				}
+				texturePacks[i] = (&proto.TexturePackInfo{}).FromLatest(t)
 				if t.DownloadURL != "" {
 					packURLs = append(packURLs, protocol.PackURL{
 						UUIDVersion: t.UUID.String() + "_" + t.Version,
@@ -196,7 +169,7 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 			pks[pkIndex] = &legacypacket.InventorySlot{
 				WindowID:             pk.WindowID,
 				Slot:                 pk.Slot,
-				Container:            pk.Container,
+				Container:            (&proto.FullContainerName{}).FromLatest(pk.Container),
 				DynamicContainerSize: 0,
 				StorageItem:          pk.StorageItem,
 				NewItem:              pk.NewItem,
@@ -205,7 +178,7 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 			pks[pkIndex] = &legacypacket.InventoryContent{
 				WindowID:             pk.WindowID,
 				Content:              pk.Content,
-				Container:            pk.Container,
+				Container:            (&proto.FullContainerName{}).FromLatest(pk.Container),
 				DynamicContainerSize: 0,
 				StorageItem:          pk.StorageItem,
 			}
@@ -226,6 +199,39 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				Distance:   pk.Distance,
 				TargetMode: pk.TargetMode,
 				Action:     pk.Action,
+			}
+		case *packet.UpdateAttributes:
+			attributes := make([]proto.Attribute, len(pk.Attributes))
+			for i, a := range pk.Attributes {
+				attributes[i] = (&proto.Attribute{}).FromLatest(a)
+			}
+			pks[pkIndex] = &legacypacket.UpdateAttributes{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				Attributes:      attributes,
+				Tick:            pk.Tick,
+			}
+		case *packet.ContainerRegistryCleanup:
+			removedContainers := make([]proto.FullContainerName, len(pk.RemovedContainers))
+			for i, c := range pk.RemovedContainers {
+				removedContainers[i] = (&proto.FullContainerName{}).FromLatest(c)
+			}
+			pks[pkIndex] = &legacypacket.ContainerRegistryCleanup{
+				RemovedContainers: removedContainers,
+			}
+		case *packet.Emote:
+			pks[pkIndex] = &legacypacket.Emote{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				EmoteLength:     pk.EmoteLength,
+				EmoteID:         pk.EmoteID,
+				XUID:            pk.XUID,
+				PlatformID:      pk.PlatformID,
+				Flags:           pk.Flags,
+			}
+		case *packet.Transfer:
+			pks[pkIndex] = &legacypacket.Transfer{
+				Address:     pk.Address,
+				Port:        pk.Port,
+				ReloadWorld: pk.ReloadWorld,
 			}
 		}
 	}
@@ -304,7 +310,7 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 			pks[pkIndex] = &packet.InventorySlot{
 				WindowID:    pk.WindowID,
 				Slot:        pk.Slot,
-				Container:   pk.Container,
+				Container:   pk.Container.ToLatest(),
 				StorageItem: pk.StorageItem,
 				NewItem:     pk.NewItem,
 			}
@@ -312,7 +318,7 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 			pks[pkIndex] = &packet.InventoryContent{
 				WindowID:    pk.WindowID,
 				Content:     pk.Content,
-				Container:   pk.Container,
+				Container:   pk.Container.ToLatest(),
 				StorageItem: pk.StorageItem,
 			}
 		case *legacypacket.MobEffect:
@@ -332,6 +338,39 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 				Distance:   pk.Distance,
 				TargetMode: pk.TargetMode,
 				Action:     pk.Action,
+			}
+		case *legacypacket.UpdateAttributes:
+			attributes := make([]protocol.Attribute, len(pk.Attributes))
+			for i, a := range pk.Attributes {
+				attributes[i] = a.ToLatest()
+			}
+			pks[pkIndex] = &packet.UpdateAttributes{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				Attributes:      attributes,
+				Tick:            pk.Tick,
+			}
+		case *legacypacket.ContainerRegistryCleanup:
+			removedContainers := make([]protocol.FullContainerName, len(pk.RemovedContainers))
+			for i, c := range pk.RemovedContainers {
+				removedContainers[i] = c.ToLatest()
+			}
+			pks[pkIndex] = &packet.ContainerRegistryCleanup{
+				RemovedContainers: removedContainers,
+			}
+		case *legacypacket.Emote:
+			pks[pkIndex] = &packet.Emote{
+				EntityRuntimeID: pk.EntityRuntimeID,
+				EmoteLength:     pk.EmoteLength,
+				EmoteID:         pk.EmoteID,
+				XUID:            pk.XUID,
+				PlatformID:      pk.PlatformID,
+				Flags:           pk.Flags,
+			}
+		case *legacypacket.Transfer:
+			pks[pkIndex] = &packet.Transfer{
+				Address:     pk.Address,
+				Port:        pk.Port,
+				ReloadWorld: pk.ReloadWorld,
 			}
 		}
 	}

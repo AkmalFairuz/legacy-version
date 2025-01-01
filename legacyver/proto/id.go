@@ -3,12 +3,12 @@ package proto
 import "github.com/sandertv/gophertunnel/minecraft/protocol"
 
 const (
-	ID766 = 766
-	ID748 = 748
-	ID729 = 729
-	ID712 = 712
-	ID686 = 686
-	ID685 = 685
+	ID766 = 766 // v1.21.50
+	ID748 = 748 // v1.21.40
+	ID729 = 729 // v1.21.30
+	ID712 = 712 // v1.21.20
+	ID686 = 686 // v1.21.2
+	ID685 = 685 // v1.21.0
 )
 
 func IsProtoGTE(io protocol.IO, proto int32) bool {
