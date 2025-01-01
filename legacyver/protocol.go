@@ -84,6 +84,8 @@ func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packe
 		return func() packet.Packet { return &legacypacket.Text{} }
 	case packet.IDStartGame:
 		return func() packet.Packet { return &legacypacket.StartGame{} }
+	case packet.IDCodeBuilderSource:
+		return func() packet.Packet { return &legacypacket.CodeBuilderSource{} }
 	default:
 		return cur
 	}
@@ -500,6 +502,12 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				UseBlockNetworkIDHashes:        pk.UseBlockNetworkIDHashes,
 				ServerAuthoritativeSound:       pk.ServerAuthoritativeSound,
 			}
+		case *packet.CodeBuilderSource:
+			pks[pkIndex] = &legacypacket.CodeBuilderSource{
+				Operation:  pk.Operation,
+				Category:   pk.Category,
+				CodeStatus: pk.CodeStatus,
+			}
 		}
 	}
 
@@ -885,6 +893,12 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 				ScenarioID:                     pk.ScenarioID,
 				UseBlockNetworkIDHashes:        pk.UseBlockNetworkIDHashes,
 				ServerAuthoritativeSound:       pk.ServerAuthoritativeSound,
+			}
+		case *legacypacket.CodeBuilderSource:
+			pks[pkIndex] = &packet.CodeBuilderSource{
+				Operation:  pk.Operation,
+				Category:   pk.Category,
+				CodeStatus: pk.CodeStatus,
 			}
 		}
 	}
