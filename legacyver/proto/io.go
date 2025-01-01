@@ -27,7 +27,6 @@ func NewReader(r *protocol.Reader, protocolID int32) *Reader {
 
 func (r *Reader) SetProtocolID(protocolID int32) { r.protocolID = protocolID }
 func (r *Reader) ProtocolID() int32              { return r.protocolID }
-func (r *Reader) Reads() bool                    { return true }
 
 type Writer struct {
 	*protocol.Writer
@@ -41,7 +40,6 @@ func NewWriter(w *protocol.Writer, protocolID int32) *Writer {
 
 func (w *Writer) SetProtocolID(protocolID int32) { w.protocolID = protocolID }
 func (w *Writer) ProtocolID() int32              { return w.protocolID }
-func (w *Writer) Reads() bool                    { return false }
 
 func IsReader(r protocol.IO) bool {
 	_, ok := r.(*Reader)
