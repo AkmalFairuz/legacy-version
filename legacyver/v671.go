@@ -9,7 +9,7 @@ import (
 
 const (
 	// ItemVersion671 ...
-	ItemVersion671 = 191
+	ItemVersion671 = 181
 	// BlockVersion671 ...
 	BlockVersion671 int32 = (1 << 24) | (20 << 16) | (80 << 8)
 )
@@ -23,7 +23,7 @@ var (
 	blockStateData671 []byte
 )
 
-// New671 uses same data as 671
+// New671 ...
 func New671() *Protocol {
 	itemMapping := mapping.NewItemMapping(itemRuntimeIDData671, requiredItemList671, ItemVersion671, false)
 	blockMapping := mapping.NewBlockMapping(blockStateData671)
