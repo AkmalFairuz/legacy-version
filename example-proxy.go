@@ -33,6 +33,7 @@ func main() {
 			legacyver.New712(),
 			legacyver.New686(),
 			legacyver.New685(),
+			legacyver.New671(),
 		},
 	}.Listen("raknet", config.Connection.LocalAddress)
 	if err != nil {
