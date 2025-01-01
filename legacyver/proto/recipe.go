@@ -1,7 +1,6 @@
 package proto
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 )
@@ -60,9 +59,9 @@ const (
 // are available server-side.
 type Recipe interface {
 	// Marshal encodes the recipe data to its binary representation into buf.
-	Marshal(w *protocol.Writer)
+	Marshal(w *Writer)
 	// Unmarshal decodes a serialised recipe from Reader r into the recipe instance.
-	Unmarshal(r *protocol.Reader)
+	Unmarshal(r *Reader)
 }
 
 func takePtr[T any](x T) *T {
@@ -92,8 +91,7 @@ func RecipeToLatest(x Recipe) protocol.Recipe {
 	case *SmithingTrimRecipe:
 		return takePtr(x.ToLatest())
 	}
-	fmt.Println("RecipeToLatest: unknown recipe type")
-	return x
+	panic("RecipeToLatest: unknown recipe type")
 }
 
 func RecipeFromLatest(x protocol.Recipe) Recipe {
@@ -119,8 +117,7 @@ func RecipeFromLatest(x protocol.Recipe) Recipe {
 	case *protocol.SmithingTrimRecipe:
 		return (&SmithingTrimRecipe{}).FromLatest(*x)
 	}
-	fmt.Println("RecipeFromLatest: unknown recipe type")
-	return x
+	panic("RecipeFromLatest: unknown recipe type")
 }
 
 // lookupRecipe looks up the Recipe for a recipe type. False is returned if not
@@ -369,12 +366,12 @@ func (recipe *ShapelessRecipe) ToLatest() protocol.ShapelessRecipe {
 }
 
 // Marshal ...
-func (recipe *ShapelessRecipe) Marshal(w *protocol.Writer) {
+func (recipe *ShapelessRecipe) Marshal(w *Writer) {
 	marshalShapeless(w, recipe)
 }
 
 // Unmarshal ...
-func (recipe *ShapelessRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *ShapelessRecipe) Unmarshal(r *Reader) {
 	marshalShapeless(r, recipe)
 }
 
@@ -392,12 +389,12 @@ func (recipe *ShulkerBoxRecipe) ToLatest() protocol.ShulkerBoxRecipe {
 }
 
 // Marshal ...
-func (recipe *ShulkerBoxRecipe) Marshal(w *protocol.Writer) {
+func (recipe *ShulkerBoxRecipe) Marshal(w *Writer) {
 	marshalShapeless(w, &recipe.ShapelessRecipe)
 }
 
 // Unmarshal ...
-func (recipe *ShulkerBoxRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *ShulkerBoxRecipe) Unmarshal(r *Reader) {
 	marshalShapeless(r, &recipe.ShapelessRecipe)
 }
 
@@ -415,12 +412,12 @@ func (recipe *ShapelessChemistryRecipe) ToLatest() protocol.ShapelessChemistryRe
 }
 
 // Marshal ...
-func (recipe *ShapelessChemistryRecipe) Marshal(w *protocol.Writer) {
+func (recipe *ShapelessChemistryRecipe) Marshal(w *Writer) {
 	marshalShapeless(w, &recipe.ShapelessRecipe)
 }
 
 // Unmarshal ...
-func (recipe *ShapelessChemistryRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *ShapelessChemistryRecipe) Unmarshal(r *Reader) {
 	marshalShapeless(r, &recipe.ShapelessRecipe)
 }
 
@@ -458,12 +455,12 @@ func (recipe *ShapedRecipe) ToLatest() protocol.ShapedRecipe {
 }
 
 // Marshal ...
-func (recipe *ShapedRecipe) Marshal(w *protocol.Writer) {
+func (recipe *ShapedRecipe) Marshal(w *Writer) {
 	marshalShaped(w, recipe)
 }
 
 // Unmarshal ...
-func (recipe *ShapedRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *ShapedRecipe) Unmarshal(r *Reader) {
 	marshalShaped(r, recipe)
 }
 
@@ -481,12 +478,12 @@ func (recipe *ShapedChemistryRecipe) ToLatest() protocol.ShapedChemistryRecipe {
 }
 
 // Marshal ...
-func (recipe *ShapedChemistryRecipe) Marshal(w *protocol.Writer) {
+func (recipe *ShapedChemistryRecipe) Marshal(w *Writer) {
 	marshalShaped(w, &recipe.ShapedRecipe)
 }
 
 // Unmarshal ...
-func (recipe *ShapedChemistryRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *ShapedChemistryRecipe) Unmarshal(r *Reader) {
 	marshalShaped(r, &recipe.ShapedRecipe)
 }
 
@@ -508,14 +505,14 @@ func (recipe *FurnaceRecipe) ToLatest() protocol.FurnaceRecipe {
 }
 
 // Marshal ...
-func (recipe *FurnaceRecipe) Marshal(w *protocol.Writer) {
+func (recipe *FurnaceRecipe) Marshal(w *Writer) {
 	w.Varint32(&recipe.InputType.NetworkID)
 	w.Item(&recipe.Output)
 	w.String(&recipe.Block)
 }
 
 // Unmarshal ...
-func (recipe *FurnaceRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *FurnaceRecipe) Unmarshal(r *Reader) {
 	r.Varint32(&recipe.InputType.NetworkID)
 	r.Item(&recipe.Output)
 	r.String(&recipe.Block)
@@ -535,7 +532,7 @@ func (recipe *FurnaceDataRecipe) ToLatest() protocol.FurnaceDataRecipe {
 }
 
 // Marshal ...
-func (recipe *FurnaceDataRecipe) Marshal(w *protocol.Writer) {
+func (recipe *FurnaceDataRecipe) Marshal(w *Writer) {
 	w.Varint32(&recipe.InputType.NetworkID)
 	aux := int32(recipe.InputType.MetadataValue)
 	w.Varint32(&aux)
@@ -544,7 +541,7 @@ func (recipe *FurnaceDataRecipe) Marshal(w *protocol.Writer) {
 }
 
 // Unmarshal ...
-func (recipe *FurnaceDataRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *FurnaceDataRecipe) Unmarshal(r *Reader) {
 	var dataValue int32
 	r.Varint32(&recipe.InputType.NetworkID)
 	r.Varint32(&dataValue)
@@ -569,13 +566,13 @@ func (recipe *MultiRecipe) ToLatest() protocol.MultiRecipe {
 }
 
 // Marshal ...
-func (recipe *MultiRecipe) Marshal(w *protocol.Writer) {
+func (recipe *MultiRecipe) Marshal(w *Writer) {
 	w.UUID(&recipe.UUID)
 	w.Varuint32(&recipe.RecipeNetworkID)
 }
 
 // Unmarshal ...
-func (recipe *MultiRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *MultiRecipe) Unmarshal(r *Reader) {
 	r.UUID(&recipe.UUID)
 	r.Varuint32(&recipe.RecipeNetworkID)
 }
@@ -606,7 +603,7 @@ func (recipe *SmithingTransformRecipe) ToLatest() protocol.SmithingTransformReci
 }
 
 // Marshal ...
-func (recipe *SmithingTransformRecipe) Marshal(w *protocol.Writer) {
+func (recipe *SmithingTransformRecipe) Marshal(w *Writer) {
 	w.String(&recipe.RecipeID)
 	w.ItemDescriptorCount(&recipe.Template)
 	w.ItemDescriptorCount(&recipe.Base)
@@ -617,7 +614,7 @@ func (recipe *SmithingTransformRecipe) Marshal(w *protocol.Writer) {
 }
 
 // Unmarshal ...
-func (recipe *SmithingTransformRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *SmithingTransformRecipe) Unmarshal(r *Reader) {
 	r.String(&recipe.RecipeID)
 	r.ItemDescriptorCount(&recipe.Template)
 	r.ItemDescriptorCount(&recipe.Base)
@@ -651,7 +648,7 @@ func (recipe *SmithingTrimRecipe) ToLatest() protocol.SmithingTrimRecipe {
 }
 
 // Marshal ...
-func (recipe *SmithingTrimRecipe) Marshal(w *protocol.Writer) {
+func (recipe *SmithingTrimRecipe) Marshal(w *Writer) {
 	w.String(&recipe.RecipeID)
 	w.ItemDescriptorCount(&recipe.Template)
 	w.ItemDescriptorCount(&recipe.Base)
@@ -661,7 +658,7 @@ func (recipe *SmithingTrimRecipe) Marshal(w *protocol.Writer) {
 }
 
 // Unmarshal ...
-func (recipe *SmithingTrimRecipe) Unmarshal(r *protocol.Reader) {
+func (recipe *SmithingTrimRecipe) Unmarshal(r *Reader) {
 	r.String(&recipe.RecipeID)
 	r.ItemDescriptorCount(&recipe.Template)
 	r.ItemDescriptorCount(&recipe.Base)

@@ -121,13 +121,13 @@ func IORecipe(io protocol.IO, recipe *Recipe) {
 			io.UnknownEnumOption(recipeType, "crafting data recipe type")
 			return
 		}
-		(*recipe).Unmarshal(io.(*Reader).Reader)
+		(*recipe).Unmarshal(io.(*Reader))
 	} else {
 		var recipeType int32
 		if !lookupRecipeType(*recipe, &recipeType) {
 			io.UnknownEnumOption(fmt.Sprintf("%T", *recipe), "crafting recipe type")
 		}
 		io.Varint32(&recipeType)
-		(*recipe).Marshal(io.(*Writer).Writer)
+		(*recipe).Marshal(io.(*Writer))
 	}
 }
