@@ -44,6 +44,27 @@ func (x *ItemStackRequest) FromLatest(y protocol.ItemStackRequest) ItemStackRequ
 	for i, v := range y.Actions {
 		if z, ok := v.(*protocol.CraftRecipeStackRequestAction); ok {
 			x.Actions[i] = (&CraftRecipeStackRequestAction{}).FromLatest(z)
+			continue
+		}
+
+		if z, ok := v.(*protocol.AutoCraftRecipeStackRequestAction); ok {
+			x.Actions[i] = (&AutoCraftRecipeStackRequestAction{}).FromLatest(z)
+			continue
+		}
+
+		if z, ok := v.(*protocol.CraftCreativeStackRequestAction); ok {
+			x.Actions[i] = (&CraftCreativeStackRequestAction{}).FromLatest(z)
+			continue
+		}
+
+		if z, ok := v.(*protocol.CraftGrindstoneRecipeStackRequestAction); ok {
+			x.Actions[i] = (&CraftGrindstoneRecipeStackRequestAction{}).FromLatest(z)
+			continue
+		}
+
+		if z, ok := v.(*protocol.CraftLoomRecipeStackRequestAction); ok {
+			x.Actions[i] = (&CraftLoomRecipeStackRequestAction{}).FromLatest(z)
+			continue
 		}
 	}
 	x.FilterStrings = y.FilterStrings
@@ -61,6 +82,27 @@ func (x *ItemStackRequest) ToLatest() protocol.ItemStackRequest {
 	for i, v := range x.Actions {
 		if z, ok := v.(*CraftRecipeStackRequestAction); ok {
 			ret.Actions[i] = z.ToLatest()
+			continue
+		}
+
+		if z, ok := v.(*AutoCraftRecipeStackRequestAction); ok {
+			ret.Actions[i] = z.ToLatest()
+			continue
+		}
+
+		if z, ok := v.(*CraftCreativeStackRequestAction); ok {
+			ret.Actions[i] = z.ToLatest()
+			continue
+		}
+
+		if z, ok := v.(*CraftGrindstoneRecipeStackRequestAction); ok {
+			ret.Actions[i] = z.ToLatest()
+			continue
+		}
+
+		if z, ok := v.(*CraftLoomRecipeStackRequestAction); ok {
+			ret.Actions[i] = z.ToLatest()
+			continue
 		}
 	}
 	return ret
@@ -101,15 +143,15 @@ func lookupStackRequestActionType(x StackRequestAction, id *uint8) bool {
 		*id = protocol.StackRequestActionMineBlock
 	case *CraftRecipeStackRequestAction:
 		*id = protocol.StackRequestActionCraftRecipe
-	case *protocol.AutoCraftRecipeStackRequestAction:
+	case *AutoCraftRecipeStackRequestAction:
 		*id = protocol.StackRequestActionCraftRecipeAuto
-	case *protocol.CraftCreativeStackRequestAction:
+	case *CraftCreativeStackRequestAction:
 		*id = protocol.StackRequestActionCraftCreative
 	case *protocol.CraftRecipeOptionalStackRequestAction:
 		*id = protocol.StackRequestActionCraftRecipeOptional
-	case *protocol.CraftGrindstoneRecipeStackRequestAction:
+	case *CraftGrindstoneRecipeStackRequestAction:
 		*id = protocol.StackRequestActionCraftGrindstone
-	case *protocol.CraftLoomRecipeStackRequestAction:
+	case *CraftLoomRecipeStackRequestAction:
 		*id = protocol.StackRequestActionCraftLoom
 	case *protocol.CraftNonImplementedStackRequestAction:
 		*id = protocol.StackRequestActionCraftNonImplementedDeprecated
@@ -151,15 +193,15 @@ func lookupStackRequestAction(id uint8, x *protocol.StackRequestAction) bool {
 	case protocol.StackRequestActionCraftRecipe:
 		*x = &CraftRecipeStackRequestAction{}
 	case protocol.StackRequestActionCraftRecipeAuto:
-		*x = &protocol.AutoCraftRecipeStackRequestAction{}
+		*x = &AutoCraftRecipeStackRequestAction{}
 	case protocol.StackRequestActionCraftCreative:
-		*x = &protocol.CraftCreativeStackRequestAction{}
+		*x = &CraftCreativeStackRequestAction{}
 	case protocol.StackRequestActionCraftRecipeOptional:
 		*x = &protocol.CraftRecipeOptionalStackRequestAction{}
 	case protocol.StackRequestActionCraftGrindstone:
-		*x = &protocol.CraftGrindstoneRecipeStackRequestAction{}
+		*x = &CraftGrindstoneRecipeStackRequestAction{}
 	case protocol.StackRequestActionCraftLoom:
-		*x = &protocol.CraftLoomRecipeStackRequestAction{}
+		*x = &CraftLoomRecipeStackRequestAction{}
 	case protocol.StackRequestActionCraftNonImplementedDeprecated:
 		*x = &protocol.CraftNonImplementedStackRequestAction{}
 	case protocol.StackRequestActionCraftResultsDeprecated:
@@ -602,11 +644,32 @@ type AutoCraftRecipeStackRequestAction struct {
 	Ingredients []protocol.ItemDescriptorCount
 }
 
+// FromLatest ...
+func (a *AutoCraftRecipeStackRequestAction) FromLatest(y *protocol.AutoCraftRecipeStackRequestAction) *AutoCraftRecipeStackRequestAction {
+	a.RecipeNetworkID = y.RecipeNetworkID
+	a.NumberOfCrafts = y.NumberOfCrafts
+	a.TimesCrafted = y.TimesCrafted
+	a.Ingredients = y.Ingredients
+	return a
+}
+
+// ToLatest ...
+func (a *AutoCraftRecipeStackRequestAction) ToLatest() *protocol.AutoCraftRecipeStackRequestAction {
+	return &protocol.AutoCraftRecipeStackRequestAction{
+		RecipeNetworkID: a.RecipeNetworkID,
+		NumberOfCrafts:  a.NumberOfCrafts,
+		TimesCrafted:    a.TimesCrafted,
+		Ingredients:     a.Ingredients,
+	}
+}
+
 // Marshal ...
 func (a *AutoCraftRecipeStackRequestAction) Marshal(r protocol.IO) {
 	r.Varuint32(&a.RecipeNetworkID)
 	r.Uint8(&a.NumberOfCrafts)
-	r.Uint8(&a.TimesCrafted)
+	if IsProtoGTE(r, ID712) {
+		r.Uint8(&a.TimesCrafted)
+	}
 	protocol.FuncSlice(r, &a.Ingredients, r.ItemDescriptorCount)
 }
 
@@ -621,10 +684,27 @@ type CraftCreativeStackRequestAction struct {
 	NumberOfCrafts byte
 }
 
+// FromLatest ...
+func (a *CraftCreativeStackRequestAction) FromLatest(y *protocol.CraftCreativeStackRequestAction) *CraftCreativeStackRequestAction {
+	a.CreativeItemNetworkID = y.CreativeItemNetworkID
+	a.NumberOfCrafts = y.NumberOfCrafts
+	return a
+}
+
+// ToLatest ...
+func (a *CraftCreativeStackRequestAction) ToLatest() *protocol.CraftCreativeStackRequestAction {
+	return &protocol.CraftCreativeStackRequestAction{
+		CreativeItemNetworkID: a.CreativeItemNetworkID,
+		NumberOfCrafts:        a.NumberOfCrafts,
+	}
+}
+
 // Marshal ...
 func (a *CraftCreativeStackRequestAction) Marshal(r protocol.IO) {
 	r.Varuint32(&a.CreativeItemNetworkID)
-	r.Uint8(&a.NumberOfCrafts)
+	if IsProtoGTE(r, ID712) {
+		r.Uint8(&a.NumberOfCrafts)
+	}
 }
 
 // CraftRecipeOptionalStackRequestAction is sent when using an anvil. When this action is sent, the
@@ -659,10 +739,29 @@ type CraftGrindstoneRecipeStackRequestAction struct {
 	Cost int32
 }
 
+// FromLatest ...
+func (c *CraftGrindstoneRecipeStackRequestAction) FromLatest(y *protocol.CraftGrindstoneRecipeStackRequestAction) *CraftGrindstoneRecipeStackRequestAction {
+	c.RecipeNetworkID = y.RecipeNetworkID
+	c.NumberOfCrafts = y.NumberOfCrafts
+	c.Cost = y.Cost
+	return c
+}
+
+// ToLatest ...
+func (c *CraftGrindstoneRecipeStackRequestAction) ToLatest() *protocol.CraftGrindstoneRecipeStackRequestAction {
+	return &protocol.CraftGrindstoneRecipeStackRequestAction{
+		RecipeNetworkID: c.RecipeNetworkID,
+		NumberOfCrafts:  c.NumberOfCrafts,
+		Cost:            c.Cost,
+	}
+}
+
 // Marshal ...
 func (c *CraftGrindstoneRecipeStackRequestAction) Marshal(r protocol.IO) {
 	r.Varuint32(&c.RecipeNetworkID)
-	r.Uint8(&c.NumberOfCrafts)
+	if IsProtoGTE(r, ID712) {
+		r.Uint8(&c.NumberOfCrafts)
+	}
 	r.Varint32(&c.Cost)
 }
 
@@ -675,10 +774,27 @@ type CraftLoomRecipeStackRequestAction struct {
 	TimesCrafted byte
 }
 
+// FromLatest ...
+func (c *CraftLoomRecipeStackRequestAction) FromLatest(y *protocol.CraftLoomRecipeStackRequestAction) *CraftLoomRecipeStackRequestAction {
+	c.Pattern = y.Pattern
+	c.TimesCrafted = y.TimesCrafted
+	return c
+}
+
+// ToLatest ...
+func (c *CraftLoomRecipeStackRequestAction) ToLatest() *protocol.CraftLoomRecipeStackRequestAction {
+	return &protocol.CraftLoomRecipeStackRequestAction{
+		Pattern:      c.Pattern,
+		TimesCrafted: c.TimesCrafted,
+	}
+}
+
 // Marshal ...
 func (c *CraftLoomRecipeStackRequestAction) Marshal(r protocol.IO) {
 	r.String(&c.Pattern)
-	r.Uint8(&c.TimesCrafted)
+	if IsProtoGTE(r, ID712) {
+		r.Uint8(&c.TimesCrafted)
+	}
 }
 
 // CraftNonImplementedStackRequestAction is an action sent for inventory actions that aren't yet implemented
