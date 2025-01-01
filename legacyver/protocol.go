@@ -48,6 +48,32 @@ func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packe
 		return func() packet.Packet { return &legacypacket.Transfer{} }
 	case packet.IDUpdateAttributes:
 		return func() packet.Packet { return &legacypacket.UpdateAttributes{} }
+	case packet.IDAddPlayer:
+		return func() packet.Packet { return &legacypacket.AddPlayer{} }
+	case packet.IDAddActor:
+		return func() packet.Packet { return &legacypacket.AddActor{} }
+	case packet.IDSetActorLink:
+		return func() packet.Packet { return &legacypacket.SetActorLink{} }
+	case packet.IDCameraInstruction:
+		return func() packet.Packet { return &legacypacket.CameraInstruction{} }
+	case packet.IDChangeDimension:
+		return func() packet.Packet { return &legacypacket.ChangeDimension{} }
+	case packet.IDCorrectPlayerMovePrediction:
+		return func() packet.Packet { return &legacypacket.CorrectPlayerMovePrediction{} }
+	case packet.IDDisconnect:
+		return func() packet.Packet { return &legacypacket.Disconnect{} }
+	case packet.IDEditorNetwork:
+		return func() packet.Packet { return &legacypacket.EditorNetwork{} }
+	case packet.IDMobArmourEquipment:
+		return func() packet.Packet { return &legacypacket.MobArmourEquipment{} }
+	case packet.IDPlayerArmourDamage:
+		return func() packet.Packet { return &legacypacket.PlayerArmourDamage{} }
+	case packet.IDSetTitle:
+		return func() packet.Packet { return &legacypacket.SetTitle{} }
+	case packet.IDStopSound:
+		return func() packet.Packet { return &legacypacket.StopSound{} }
+	case packet.IDInventoryTransaction:
+		return func() packet.Packet { return &legacypacket.InventoryTransaction{} }
 	default:
 		return cur
 	}
