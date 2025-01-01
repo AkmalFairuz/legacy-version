@@ -11,7 +11,7 @@ A gophertunnel protocol interface implementation to support older Minecraft Bedr
 | 712         | 1.21.20 | ✅       |
 | 686         | 1.21.2  | ✅       |
 | 685         | 1.21.0  | ✅       |
-| 671         | 1.20.80 | 🚧      |
+| 671         | 1.20.80 | ✅       |
 | 662         | 1.20.70 | 🚧      |
 | 649         | 1.20.60 | 🚧      |
 | 630         | 1.20.50 | 🚧      |

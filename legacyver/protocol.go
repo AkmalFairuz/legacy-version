@@ -76,6 +76,16 @@ func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packe
 		return func() packet.Packet { return &legacypacket.InventoryTransaction{} }
 	case packet.IDItemStackRequest:
 		return func() packet.Packet { return &legacypacket.ItemStackRequest{} }
+	case packet.IDCraftingData:
+		return func() packet.Packet { return &legacypacket.CraftingData{} }
+	case packet.IDContainerClose:
+		return func() packet.Packet { return &legacypacket.ContainerClose{} }
+	case packet.IDText:
+		return func() packet.Packet { return &legacypacket.Text{} }
+	case packet.IDStartGame:
+		return func() packet.Packet { return &legacypacket.StartGame{} }
+	case packet.IDCodeBuilderSource:
+		return func() packet.Packet { return &legacypacket.CodeBuilderSource{} }
 	default:
 		return cur
 	}
@@ -127,6 +137,8 @@ func (p *Protocol) ConvertFromLatest(pk packet.Packet, conn *minecraft.Conn) []p
 func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) []packet.Packet {
 	for pkIndex, pk := range pks {
 		switch pk := pk.(type) {
+		case *packet.ClientCacheStatus:
+			pk.Enabled = false // TODO: enable when chunk translation is not broken
 		case *packet.CameraPresets:
 			presets := make([]proto.CameraPreset, len(pk.Presets))
 			for i, p := range pk.Presets {
@@ -135,9 +147,6 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 			pks[pkIndex] = &legacypacket.CameraPresets{
 				Presets: presets,
 			}
-		case *packet.StartGame:
-			pk.GameVersion = p.ver
-			pk.BaseGameVersion = p.ver
 		case *packet.PlayerAuthInput:
 			inputData := pk.InputData
 			if p.ID() < proto.ID766 {
@@ -398,6 +407,126 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				requests[i] = (&proto.ItemStackRequest{}).FromLatest(r)
 			}
 			pks[pkIndex] = &legacypacket.ItemStackRequest{Requests: requests}
+		case *packet.Text:
+			pks[pkIndex] = &legacypacket.Text{
+				TextType:         pk.TextType,
+				NeedsTranslation: pk.NeedsTranslation,
+				SourceName:       pk.SourceName,
+				Message:          pk.Message,
+				Parameters:       pk.Parameters,
+				XUID:             pk.XUID,
+				PlatformChatID:   pk.PlatformChatID,
+				FilteredMessage:  pk.FilteredMessage,
+			}
+		case *packet.ContainerClose:
+			pks[pkIndex] = &legacypacket.ContainerClose{
+				WindowID:      pk.WindowID,
+				ContainerType: pk.ContainerType,
+				ServerSide:    pk.ServerSide,
+			}
+		case *packet.CraftingData:
+			recipes := make([]proto.Recipe, len(pk.Recipes))
+			for i, r := range pk.Recipes {
+				recipes[i] = proto.RecipeFromLatest(r)
+			}
+			pks[pkIndex] = &legacypacket.CraftingData{
+				Recipes:                      recipes,
+				PotionRecipes:                pk.PotionRecipes,
+				PotionContainerChangeRecipes: pk.PotionContainerChangeRecipes,
+				MaterialReducers:             pk.MaterialReducers,
+				ClearRecipes:                 pk.ClearRecipes,
+			}
+		case *packet.StartGame:
+			// Adjust game version
+			pk.GameVersion = p.ver
+			pk.BaseGameVersion = p.ver
+
+			pks[pkIndex] = &legacypacket.StartGame{
+				EntityUniqueID:                 pk.EntityUniqueID,
+				EntityRuntimeID:                pk.EntityRuntimeID,
+				PlayerGameMode:                 pk.PlayerGameMode,
+				PlayerPosition:                 pk.PlayerPosition,
+				Pitch:                          pk.Pitch,
+				Yaw:                            pk.Yaw,
+				WorldSeed:                      pk.WorldSeed,
+				SpawnBiomeType:                 pk.SpawnBiomeType,
+				UserDefinedBiomeName:           pk.UserDefinedBiomeName,
+				Dimension:                      pk.Dimension,
+				Generator:                      pk.Generator,
+				WorldGameMode:                  pk.WorldGameMode,
+				Hardcore:                       pk.Hardcore,
+				Difficulty:                     pk.Difficulty,
+				WorldSpawn:                     pk.WorldSpawn,
+				AchievementsDisabled:           pk.AchievementsDisabled,
+				EditorWorldType:                pk.EditorWorldType,
+				CreatedInEditor:                pk.CreatedInEditor,
+				ExportedFromEditor:             pk.ExportedFromEditor,
+				DayCycleLockTime:               pk.DayCycleLockTime,
+				EducationEditionOffer:          pk.EducationEditionOffer,
+				EducationFeaturesEnabled:       pk.EducationFeaturesEnabled,
+				EducationProductID:             pk.EducationProductID,
+				RainLevel:                      pk.RainLevel,
+				LightningLevel:                 pk.LightningLevel,
+				ConfirmedPlatformLockedContent: pk.ConfirmedPlatformLockedContent,
+				MultiPlayerGame:                pk.MultiPlayerGame,
+				LANBroadcastEnabled:            pk.LANBroadcastEnabled,
+				XBLBroadcastMode:               pk.XBLBroadcastMode,
+				PlatformBroadcastMode:          pk.PlatformBroadcastMode,
+				CommandsEnabled:                pk.CommandsEnabled,
+				TexturePackRequired:            pk.TexturePackRequired,
+				GameRules:                      pk.GameRules,
+				Experiments:                    pk.Experiments,
+				ExperimentsPreviouslyToggled:   pk.ExperimentsPreviouslyToggled,
+				BonusChestEnabled:              pk.BonusChestEnabled,
+				StartWithMapEnabled:            pk.StartWithMapEnabled,
+				PlayerPermissions:              pk.PlayerPermissions,
+				ServerChunkTickRadius:          pk.ServerChunkTickRadius,
+				HasLockedBehaviourPack:         pk.HasLockedBehaviourPack,
+				HasLockedTexturePack:           pk.HasLockedTexturePack,
+				FromLockedWorldTemplate:        pk.FromLockedWorldTemplate,
+				MSAGamerTagsOnly:               pk.MSAGamerTagsOnly,
+				FromWorldTemplate:              pk.FromWorldTemplate,
+				WorldTemplateSettingsLocked:    pk.WorldTemplateSettingsLocked,
+				OnlySpawnV1Villagers:           pk.OnlySpawnV1Villagers,
+				PersonaDisabled:                pk.PersonaDisabled,
+				CustomSkinsDisabled:            pk.CustomSkinsDisabled,
+				EmoteChatMuted:                 pk.EmoteChatMuted,
+				BaseGameVersion:                pk.BaseGameVersion,
+				LimitedWorldWidth:              pk.LimitedWorldWidth,
+				LimitedWorldDepth:              pk.LimitedWorldDepth,
+				NewNether:                      pk.NewNether,
+				EducationSharedResourceURI:     pk.EducationSharedResourceURI,
+				ForceExperimentalGameplay:      pk.ForceExperimentalGameplay,
+				LevelID:                        pk.LevelID,
+				WorldName:                      pk.WorldName,
+				TemplateContentIdentity:        pk.TemplateContentIdentity,
+				Trial:                          pk.Trial,
+				PlayerMovementSettings:         pk.PlayerMovementSettings,
+				Time:                           pk.Time,
+				EnchantmentSeed:                pk.EnchantmentSeed,
+				Blocks:                         pk.Blocks,
+				Items:                          pk.Items,
+				MultiPlayerCorrelationID:       pk.MultiPlayerCorrelationID,
+				ServerAuthoritativeInventory:   pk.ServerAuthoritativeInventory,
+				GameVersion:                    pk.GameVersion,
+				PropertyData:                   pk.PropertyData,
+				ServerBlockStateChecksum:       pk.ServerBlockStateChecksum,
+				ClientSideGeneration:           pk.ClientSideGeneration,
+				WorldTemplateID:                pk.WorldTemplateID,
+				ChatRestrictionLevel:           pk.ChatRestrictionLevel,
+				DisablePlayerInteractions:      pk.DisablePlayerInteractions,
+				ServerID:                       pk.ServerID,
+				WorldID:                        pk.WorldID,
+				ScenarioID:                     pk.ScenarioID,
+				UseBlockNetworkIDHashes:        pk.UseBlockNetworkIDHashes,
+				ServerAuthoritativeSound:       pk.ServerAuthoritativeSound,
+			}
+		case *packet.CodeBuilderSource:
+			pks[pkIndex] = &legacypacket.CodeBuilderSource{
+				Operation:  pk.Operation,
+				Category:   pk.Category,
+				CodeStatus: pk.CodeStatus,
+			}
 		}
 	}
 
@@ -674,6 +803,122 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 				requests[i] = r.ToLatest()
 			}
 			pks[pkIndex] = &packet.ItemStackRequest{Requests: requests}
+		case *legacypacket.CraftingData:
+			recipes := make([]protocol.Recipe, len(pk.Recipes))
+			for i, r := range pk.Recipes {
+				recipes[i] = proto.RecipeToLatest(r)
+			}
+			pks[pkIndex] = &packet.CraftingData{
+				Recipes:                      recipes,
+				PotionRecipes:                pk.PotionRecipes,
+				PotionContainerChangeRecipes: pk.PotionContainerChangeRecipes,
+				MaterialReducers:             pk.MaterialReducers,
+				ClearRecipes:                 pk.ClearRecipes,
+			}
+		case *legacypacket.ContainerClose:
+			pks[pkIndex] = &packet.ContainerClose{
+				WindowID:      pk.WindowID,
+				ContainerType: pk.ContainerType,
+				ServerSide:    pk.ServerSide,
+			}
+		case *legacypacket.Text:
+			pks[pkIndex] = &packet.Text{
+				TextType:         pk.TextType,
+				NeedsTranslation: pk.NeedsTranslation,
+				SourceName:       pk.SourceName,
+				Message:          pk.Message,
+				Parameters:       pk.Parameters,
+				XUID:             pk.XUID,
+				PlatformChatID:   pk.PlatformChatID,
+				FilteredMessage:  pk.FilteredMessage,
+			}
+		case *legacypacket.StartGame:
+			pks[pkIndex] = &packet.StartGame{
+				EntityUniqueID:                 pk.EntityUniqueID,
+				EntityRuntimeID:                pk.EntityRuntimeID,
+				PlayerGameMode:                 pk.PlayerGameMode,
+				PlayerPosition:                 pk.PlayerPosition,
+				Pitch:                          pk.Pitch,
+				Yaw:                            pk.Yaw,
+				WorldSeed:                      pk.WorldSeed,
+				SpawnBiomeType:                 pk.SpawnBiomeType,
+				UserDefinedBiomeName:           pk.UserDefinedBiomeName,
+				Dimension:                      pk.Dimension,
+				Generator:                      pk.Generator,
+				WorldGameMode:                  pk.WorldGameMode,
+				Hardcore:                       pk.Hardcore,
+				Difficulty:                     pk.Difficulty,
+				WorldSpawn:                     pk.WorldSpawn,
+				AchievementsDisabled:           pk.AchievementsDisabled,
+				EditorWorldType:                pk.EditorWorldType,
+				CreatedInEditor:                pk.CreatedInEditor,
+				ExportedFromEditor:             pk.ExportedFromEditor,
+				DayCycleLockTime:               pk.DayCycleLockTime,
+				EducationEditionOffer:          pk.EducationEditionOffer,
+				EducationFeaturesEnabled:       pk.EducationFeaturesEnabled,
+				EducationProductID:             pk.EducationProductID,
+				RainLevel:                      pk.RainLevel,
+				LightningLevel:                 pk.LightningLevel,
+				ConfirmedPlatformLockedContent: pk.ConfirmedPlatformLockedContent,
+				MultiPlayerGame:                pk.MultiPlayerGame,
+				LANBroadcastEnabled:            pk.LANBroadcastEnabled,
+				XBLBroadcastMode:               pk.XBLBroadcastMode,
+				PlatformBroadcastMode:          pk.PlatformBroadcastMode,
+				CommandsEnabled:                pk.CommandsEnabled,
+				TexturePackRequired:            pk.TexturePackRequired,
+				GameRules:                      pk.GameRules,
+				Experiments:                    pk.Experiments,
+				ExperimentsPreviouslyToggled:   pk.ExperimentsPreviouslyToggled,
+				BonusChestEnabled:              pk.BonusChestEnabled,
+				StartWithMapEnabled:            pk.StartWithMapEnabled,
+				PlayerPermissions:              pk.PlayerPermissions,
+				ServerChunkTickRadius:          pk.ServerChunkTickRadius,
+				HasLockedBehaviourPack:         pk.HasLockedBehaviourPack,
+				HasLockedTexturePack:           pk.HasLockedTexturePack,
+				FromLockedWorldTemplate:        pk.FromLockedWorldTemplate,
+				MSAGamerTagsOnly:               pk.MSAGamerTagsOnly,
+				FromWorldTemplate:              pk.FromWorldTemplate,
+				WorldTemplateSettingsLocked:    pk.WorldTemplateSettingsLocked,
+				OnlySpawnV1Villagers:           pk.OnlySpawnV1Villagers,
+				PersonaDisabled:                pk.PersonaDisabled,
+				CustomSkinsDisabled:            pk.CustomSkinsDisabled,
+				EmoteChatMuted:                 pk.EmoteChatMuted,
+				BaseGameVersion:                pk.BaseGameVersion,
+				LimitedWorldWidth:              pk.LimitedWorldWidth,
+				LimitedWorldDepth:              pk.LimitedWorldDepth,
+				NewNether:                      pk.NewNether,
+				EducationSharedResourceURI:     pk.EducationSharedResourceURI,
+				ForceExperimentalGameplay:      pk.ForceExperimentalGameplay,
+				LevelID:                        pk.LevelID,
+				WorldName:                      pk.WorldName,
+				TemplateContentIdentity:        pk.TemplateContentIdentity,
+				Trial:                          pk.Trial,
+				PlayerMovementSettings:         pk.PlayerMovementSettings,
+				Time:                           pk.Time,
+				EnchantmentSeed:                pk.EnchantmentSeed,
+				Blocks:                         pk.Blocks,
+				Items:                          pk.Items,
+				MultiPlayerCorrelationID:       pk.MultiPlayerCorrelationID,
+				ServerAuthoritativeInventory:   pk.ServerAuthoritativeInventory,
+				GameVersion:                    pk.GameVersion,
+				PropertyData:                   pk.PropertyData,
+				ServerBlockStateChecksum:       pk.ServerBlockStateChecksum,
+				ClientSideGeneration:           pk.ClientSideGeneration,
+				WorldTemplateID:                pk.WorldTemplateID,
+				ChatRestrictionLevel:           pk.ChatRestrictionLevel,
+				DisablePlayerInteractions:      pk.DisablePlayerInteractions,
+				ServerID:                       pk.ServerID,
+				WorldID:                        pk.WorldID,
+				ScenarioID:                     pk.ScenarioID,
+				UseBlockNetworkIDHashes:        pk.UseBlockNetworkIDHashes,
+				ServerAuthoritativeSound:       pk.ServerAuthoritativeSound,
+			}
+		case *legacypacket.CodeBuilderSource:
+			pks[pkIndex] = &packet.CodeBuilderSource{
+				Operation:  pk.Operation,
+				Category:   pk.Category,
+				CodeStatus: pk.CodeStatus,
+			}
 		}
 	}
 	return pks

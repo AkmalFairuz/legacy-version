@@ -28,11 +28,12 @@ func main() {
 	listener, err := minecraft.ListenConfig{
 		StatusProvider: p,
 		AcceptedProtocols: []minecraft.Protocol{
-			legacyver.New748(false),
-			legacyver.New729(false),
-			legacyver.New712(false),
-			legacyver.New686(false),
-			legacyver.New685(false),
+			legacyver.New748(),
+			legacyver.New729(),
+			legacyver.New712(),
+			legacyver.New686(),
+			legacyver.New685(),
+			legacyver.New671(),
 		},
 	}.Listen("raknet", config.Connection.LocalAddress)
 	if err != nil {
