@@ -418,6 +418,12 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				PlatformChatID:   pk.PlatformChatID,
 				FilteredMessage:  pk.FilteredMessage,
 			}
+		case *packet.ContainerClose:
+			pks[pkIndex] = &legacypacket.ContainerClose{
+				WindowID:      pk.WindowID,
+				ContainerType: pk.ContainerType,
+				ServerSide:    pk.ServerSide,
+			}
 		case *packet.CraftingData:
 			recipes := make([]proto.Recipe, len(pk.Recipes))
 			for i, r := range pk.Recipes {
