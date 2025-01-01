@@ -96,3 +96,21 @@ func PlayerInventoryAction(io protocol.IO, x *protocol.UseItemTransactionData) {
 		io.Varuint32(&x.ClientPrediction)
 	}
 }
+
+func IOStackRequestAction(io protocol.IO, x *protocol.StackRequestAction) {
+	if IsReader(io) {
+		var id uint8
+		io.Uint8(&id)
+		if !lookupStackRequestAction(id, x) {
+			io.UnknownEnumOption(id, "stack request action type")
+			return
+		}
+	} else {
+		var id byte
+		if !lookupStackRequestActionType(*x, &id) {
+			io.UnknownEnumOption(fmt.Sprintf("%T", *x), "stack request action type")
+		}
+		io.Uint8(&id)
+	}
+	(*x).Marshal(io)
+}

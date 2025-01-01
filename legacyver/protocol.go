@@ -74,6 +74,8 @@ func convertPacketFunc(pid uint32, cur func() packet.Packet) func() packet.Packe
 		return func() packet.Packet { return &legacypacket.StopSound{} }
 	case packet.IDInventoryTransaction:
 		return func() packet.Packet { return &legacypacket.InventoryTransaction{} }
+	case packet.IDItemStackRequest:
+		return func() packet.Packet { return &legacypacket.ItemStackRequest{} }
 	default:
 		return cur
 	}
@@ -390,6 +392,12 @@ func (p *Protocol) downgradePackets(pks []packet.Packet, conn *minecraft.Conn) [
 				Actions:            pk.Actions,
 				TransactionData:    trData,
 			}
+		case *packet.ItemStackRequest:
+			requests := make([]proto.ItemStackRequest, len(pk.Requests))
+			for i, r := range pk.Requests {
+				requests[i] = (&proto.ItemStackRequest{}).FromLatest(r)
+			}
+			pks[pkIndex] = &legacypacket.ItemStackRequest{Requests: requests}
 		}
 	}
 
@@ -660,6 +668,12 @@ func (p *Protocol) upgradePackets(pks []packet.Packet, conn *minecraft.Conn) []p
 				Actions:            pk.Actions,
 				TransactionData:    trData,
 			}
+		case *legacypacket.ItemStackRequest:
+			requests := make([]protocol.ItemStackRequest, len(pk.Requests))
+			for i, r := range pk.Requests {
+				requests[i] = r.ToLatest()
+			}
+			pks[pkIndex] = &packet.ItemStackRequest{Requests: requests}
 		}
 	}
 	return pks
